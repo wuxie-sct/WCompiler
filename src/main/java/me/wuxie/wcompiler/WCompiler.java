@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class WCompiler extends JavaPlugin {
+    public static Map<String,Object> objectMap = new HashMap<>();
     public static String sourceDir = "";
     public static String targetDir = "";
     public static String jarsDir = "";
@@ -20,6 +21,7 @@ public final class WCompiler extends JavaPlugin {
     public static List<WRun> enableRun;
     public static List<WRun> stopRun;
     public static Map<String,WRun> commandRun;
+
     @Override
     public void onLoad() {
         classLoader = new MyClassLoader(this.getClass().getClassLoader());
@@ -59,6 +61,12 @@ public final class WCompiler extends JavaPlugin {
             run.run();
         }
     }
+
+    @Override
+    public File getFile() {
+        return super.getFile();
+    }
+
     @Override
     public void onEnable() {
         new Metrics(this, 14715);
@@ -139,7 +147,7 @@ public final class WCompiler extends JavaPlugin {
                 return false;
             }
             Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromFiles(sourceFileList);
-            Iterable<String> options = Arrays.asList("-encoding", encoding, "-classpath", jars, "-d", targetDir, "-sourcepath", sourceDir);
+            Iterable<String> options = Arrays.asList("-encoding", encoding, "-cp", jars, "-d", targetDir, "-sourcepath", sourceDir);
             JavaCompiler.CompilationTask compilationTask = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
             return compilationTask.call();
         }
@@ -228,20 +236,23 @@ public final class WCompiler extends JavaPlugin {
         for (Map.Entry<File, String> mp : packages.entrySet()) {
             String name = mp.getKey().getName();
             String fileHeadName = name.substring(0, name.length() - 5);
-            String simpleName = ((mp.getValue().isEmpty()?"":mp.getValue()+".")+ fileHeadName).replace(".",File.separator);
-            String classFile = targetDir+File.separator+ simpleName +".class";
-            try {
+            //String simpleName = ((mp.getValue().isEmpty() ? "" : mp.getValue() + ".") + fileHeadName).replace(".", File.separator);
+            //String classFile = targetDir + File.separator + simpleName + ".class";
+            /*try {
                 FileInputStream in = new FileInputStream(classFile);
                 int len = in.available();
                 byte[] bytes = new byte[len];
                 in.read(bytes);
-                classLoader.setIn(bytes);
                 in.close();
-                classLoader.findClass((mp.getValue().isEmpty()?"":mp.getValue()+".")+  fileHeadName);
+                //classLoader.setIn(bytes);
+                String n = (mp.getValue().isEmpty() ? "" : mp.getValue() + ".") + fileHeadName;
+                classLoader.findClass(n);
                 //new File(classFile).delete();
             } catch (Exception se) {
                 se.printStackTrace();
-            }
+            }*/
+            String n = (mp.getValue().isEmpty() ? "" : mp.getValue() + ".") + fileHeadName;
+            classLoader.findClass(n);
         }
     }
 
@@ -254,11 +265,16 @@ public final class WCompiler extends JavaPlugin {
             p = packages.get(file);
         }
         String s = p.isEmpty() ? "" : p + ".";
-        String simpleName = (s + fileHeadName).replace(".",File.separator);
+        /*String simpleName = (s + fileHeadName).replace(".",File.separator);
         String classFile = targetDir+File.separator+ simpleName +".class";
-        new File(classFile).deleteOnExit();
+        FileInputStream in = new FileInputStream(classFile);
+        int len = in.available();
+        byte[] bytes = new byte[len];
+        in.read(bytes);
+        in.close();
+        new File(classFile).deleteOnExit();*/
         try {
-            Class<?> c = classLoader.findClass(s+ fileHeadName);
+            classLoader.findClass(s+ fileHeadName);
         } catch (Exception se) {
             se.printStackTrace();
         }
@@ -275,7 +291,6 @@ public final class WCompiler extends JavaPlugin {
         File file = File.createTempFile("JavaRuntime", ".java", new File(sourceDir));
         file.createNewFile();
         String classname = getBaseFileName(file);
-        //PrintWriter out = new PrintWriter(new FileOutputStream(file));
         boolean flag = System.getProperty("os.name").contains("Windows");
         PrintWriter out = new PrintWriter(
                 new BufferedWriter(
@@ -285,7 +300,7 @@ public final class WCompiler extends JavaPlugin {
         out.close();
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
-        Iterable<String> options = Arrays.asList("-encoding", "UTF-8", "-classpath", getJarFiles(jarsDir)+jars, "-d", targetDir, "-sourcepath", sourceDir);
+        Iterable<String> options = Arrays.asList("-encoding", "UTF-8","-cp", getJarFiles(jarsDir)+jars, "-d", targetDir, "-sourcepath", sourceDir);
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
         List<File> files = new ArrayList<>();
         files.add(file);
@@ -303,13 +318,14 @@ public final class WCompiler extends JavaPlugin {
             }
         }
         File classFile = new File(targetDir+File.separator+classname+".class");
-        FileInputStream in = new FileInputStream(classFile);
+        /*FileInputStream in = new FileInputStream(classFile);
         int len = in.available();
         byte[] bytes = new byte[len];
         in.read(bytes);
         classLoader.setIn(bytes);
         in.close();
-        classFile.delete();
+        classFile.delete();*/
+        classLoader.setDelete(true);
         Class<?> c = classLoader.findClass(classname);
         Method main = c.getMethod("method");
         main.invoke(c);
