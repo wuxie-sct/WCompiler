@@ -1,0 +1,6 @@
+name: WCompiler
+version: ${project.version}
+main: me.wuxie.wcompiler.WCompiler
+authors: [ wuxie ]
+commands:
+  wcr:

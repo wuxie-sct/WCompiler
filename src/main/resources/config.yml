@@ -1,0 +1,51 @@
+# 服务器加载时执行的java代码语句
+loadCode:
+# 服务器启动时执行的java代码语句
+enableCode:
+  # 代码1
+  code1:
+    # 导入包
+    importList:
+      - org.bukkit.Bukkit
+      - test.test.Test
+      - org.bukkit.entity.Player
+      - java.util.Random
+    # 导入运行库(需要绝对路径 如 F:\1.12.2\spigot-1.12.2.jar)
+    importJar: []
+    # 导入依赖的java文件(指定source文件夹下)
+    importJavaFile:
+      - test/test/Test.java
+    # 代码块
+    code: |-
+      Bukkit.getConsoleSender().sendMessage("§c开始运行 enableCode.code1 代码块~~");
+      Bukkit.getConsoleSender().sendMessage("代码块节点位于config.yml enableCode.code1");
+      Bukkit.getConsoleSender().sendMessage("服务器开始运行~~");
+      Test.test();
+      Random r = new Random();
+      int n = r.nextInt(101);
+      System.out.println(n);
+      Bukkit.getConsoleSender().sendMessage("§cenableCode.code1 代码块 运行结束");
+  # 注册命令
+  code2:
+    # 一定要导包，缺少包就无法识别类
+    importList:
+      - me.wuxie.wcompiler.MainCommand
+    importJar: []
+    importJavaFile:
+      - me/wuxie/wcompiler/MainCommand.java
+    code: 'MainCommand.init();'
+# 服务器停止时执行的java代码语句
+stopCode:
+# 使用命令来执行的java代码语句
+commandCode:
+  # /wcr run code1
+  code1:
+    importList:
+      - org.bukkit.Bukkit
+      - java.io.File
+    importJar: []
+    importJavaFile: []
+    code: |-
+      System.out.println(System.getProperty("user.dir"));
+      File f = new File(Bukkit.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+      System.out.println(f.getName());
